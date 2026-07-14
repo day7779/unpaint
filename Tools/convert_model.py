@@ -110,27 +110,45 @@ def export_onnx(model_dir, work_dir):
 
 
 def convert_fp16(onnx_dir):
-    import onnx
-    from onnxconverter_common import float16
+    from onnxruntime.transformers.optimizer import optimize_model
+    from onnxruntime.transformers.fusion_options import FusionOptions
+
+    model_types = {
+        "unet": "unet",
+        "text_encoder": "clip",
+        "vae_encoder": "vae",
+        "vae_decoder": "vae",
+    }
 
     for component in ONNX_COMPONENTS:
-        model_path = os.path.join(onnx_dir, component, "model.onnx")
+        component_dir = os.path.join(onnx_dir, component)
+        model_path = os.path.join(component_dir, "model.onnx")
         if not os.path.exists(model_path):
             raise RuntimeError(f"missing exported component: {component}")
 
-        log(f"converting {component} to fp16")
-        model = onnx.load(model_path)
-        model_fp16 = float16.convert_float_to_float16(model, keep_io_types=True, disable_shape_infer=True)
+        log(f"optimizing and converting {component} to fp16")
+        model_type = model_types[component]
+        fusion_options = FusionOptions(model_type)
+        model = optimize_model(
+            model_path,
+            model_type=model_type,
+            opt_level=0,
+            optimization_options=fusion_options,
+            use_gpu=True,
+        )
+        model.convert_float_to_float16(keep_io_types=True, op_block_list=["RandomNormalLike"])
 
-        # drop external data files and save a single fp16 file
-        component_dir = os.path.join(onnx_dir, component)
+        # drop the fp32 files and save a single fp16 file
+        fp16_path = os.path.join(component_dir, "model_fp16.onnx")
+        model.save_model_to_file(fp16_path, use_external_data_format=False)
+        del model
+
         for name in os.listdir(component_dir):
             full = os.path.join(component_dir, name)
-            if name != "model.onnx":
+            if name != "model_fp16.onnx":
                 os.remove(full)
+        os.rename(fp16_path, model_path)
 
-        onnx.save(model_fp16, model_path)
-        del model, model_fp16
         log(f"{component} is now {os.path.getsize(model_path)} bytes")
 
 
