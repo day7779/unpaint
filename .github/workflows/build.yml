@@ -1,0 +1,92 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - 'models.json'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup msbuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: ensure uwp components
+        shell: pwsh
+        run: |
+          $vswhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -property installationPath
+          Write-Host "VS at $vsPath"
+          $uwpProps = "$vsPath\MSBuild\Microsoft\VC\v170\Application Type\Windows Store"
+          if (Test-Path $uwpProps) {
+            Write-Host "UWP C++ tools already installed"
+          } else {
+            Write-Host "Installing UWP workload, this takes a few minutes..."
+            $installer = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe"
+            $args = @("modify", "--installPath", $vsPath,
+              "--add", "Microsoft.VisualStudio.Workload.Universal",
+              "--add", "Microsoft.VisualStudio.ComponentGroup.UWP.VC.v143",
+              "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+              "--quiet", "--norestart", "--nocache")
+            $process = Start-Process -FilePath $installer -ArgumentList $args -Wait -PassThru
+            Write-Host "Installer exit code: $($process.ExitCode)"
+            if (!(Test-Path $uwpProps)) { throw "UWP C++ tools are still missing after install" }
+          }
+
+      - name: restore packages
+        shell: pwsh
+        run: .\Tools\nuget.exe restore .\Unpaint.sln
+
+      - name: create signing certificate
+        id: cert
+        shell: pwsh
+        run: |
+          $cert = New-SelfSignedCertificate -Type Custom -Subject "CN=Axodox" -KeyUsage DigitalSignature -FriendlyName "unpaint ci" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+          $password = ConvertTo-SecureString -String "unpaint" -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath "$PWD\ci.pfx" -Password $password | Out-Null
+          Export-Certificate -Cert $cert -FilePath "$PWD\Unpaint.cer" | Out-Null
+          "thumbprint=$($cert.Thumbprint)" >> $env:GITHUB_OUTPUT
+
+      - name: set package version
+        shell: pwsh
+        run: |
+          $version = "2.0.$env:GITHUB_RUN_NUMBER.0"
+          [XML]$manifest = Get-Content "Unpaint/Package.appxmanifest"
+          $manifest.Package.Identity.Version = $version
+          $manifest.Save("$PWD/Unpaint/Package.appxmanifest")
+          Write-Host "Package version set to $version"
+
+      - name: build
+        shell: pwsh
+        run: |
+          msbuild .\Unpaint.sln `
+            -p:Configuration=Release `
+            -p:Platform=x64 `
+            -p:AppxBundle=Never `
+            -p:UapAppxPackageBuildMode=SideloadOnly `
+            -p:AppxPackageSigningEnabled=true `
+            -p:PackageCertificateKeyFile="$PWD\ci.pfx" `
+            -p:PackageCertificatePassword=unpaint `
+            -p:PackageCertificateThumbprint="${{ steps.cert.outputs.thumbprint }}" `
+            -p:AppxPackageDir="$PWD\AppPackages\" `
+            -m -v:m
+
+      - name: collect output
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse AppPackages | Select-Object FullName | Out-String | Write-Host
+          Copy-Item "$PWD\Unpaint.cer" -Destination "AppPackages\" -Force
+
+      - name: upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: unpaint-msix
+          path: AppPackages/
+          if-no-files-found: error

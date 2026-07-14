@@ -1,0 +1,70 @@
+name: convert model
+
+on:
+  workflow_dispatch:
+    inputs:
+      preset:
+        description: 'Model preset'
+        required: true
+        default: 'counterfeit-v3'
+        type: choice
+        options:
+          - counterfeit-v3
+          - sd15
+          - custom
+      custom_url:
+        description: 'Direct safetensors checkpoint URL (only for custom preset)'
+        required: false
+        type: string
+      custom_key:
+        description: 'Short key for the custom model (lowercase, no spaces)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: install dependencies
+        run: |
+          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet "diffusers>=0.27" "transformers>=4.38" accelerate safetensors omegaconf
+          pip install --quiet "optimum[onnxruntime]" onnx onnxconverter-common onnxruntime
+
+      - name: convert
+        run: |
+          python Tools/convert_model.py \
+            --preset "${{ inputs.preset }}" \
+            --custom-url "${{ inputs.custom_url }}" \
+            --custom-key "${{ inputs.custom_key }}" \
+            --output out
+
+      - name: upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view models-v1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create models-v1 --repo "$GITHUB_REPOSITORY" -t "Model downloads" -n "ONNX models used by the in-app model installer."
+          gh release upload models-v1 out/assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: upload manifest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-manifest
+          path: out/*.manifest.json
+          if-no-files-found: error
