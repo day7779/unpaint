@@ -128,14 +128,30 @@ def convert_fp16(onnx_dir):
 
         log(f"optimizing and converting {component} to fp16")
         model_type = model_types[component]
-        fusion_options = FusionOptions(model_type)
-        model = optimize_model(
-            model_path,
-            model_type=model_type,
-            opt_level=0,
-            optimization_options=fusion_options,
-            use_gpu=True,
-        )
+
+        model = None
+        last_error = None
+        for disable_attention_fusion in (False, True):
+            try:
+                fusion_options = FusionOptions(model_type)
+                if disable_attention_fusion:
+                    fusion_options.enable_attention = False
+                    log(f"retrying {component} with attention fusion disabled")
+                model = optimize_model(
+                    model_path,
+                    model_type=model_type,
+                    opt_level=0,
+                    optimization_options=fusion_options,
+                    use_gpu=True,
+                )
+                break
+            except Exception as error:
+                last_error = error
+                log(f"fusion attempt failed for {component}: {error}")
+
+        if model is None:
+            raise RuntimeError(f"optimization failed for {component}: {last_error}")
+
         model.convert_float_to_float16(keep_io_types=True, op_block_list=["RandomNormalLike"])
 
         # drop the fp32 files and save a single fp16 file
