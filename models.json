@@ -5,15 +5,51 @@
       "name": "Counterfeit V3 (anime)",
       "website": "https://huggingface.co/gsdf/Counterfeit-V3.0",
       "files": [
-        { "path": "unet/model.onnx", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.unet.model.onnx", "size": 0 },
-        { "path": "text_encoder/model.onnx", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.text_encoder.model.onnx", "size": 0 },
-        { "path": "vae_encoder/model.onnx", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.vae_encoder.model.onnx", "size": 0 },
-        { "path": "vae_decoder/model.onnx", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.vae_decoder.model.onnx", "size": 0 },
-        { "path": "tokenizer/vocab.json", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.tokenizer.vocab.json", "size": 0 },
-        { "path": "tokenizer/merges.txt", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.tokenizer.merges.txt", "size": 0 },
-        { "path": "tokenizer/special_tokens_map.json", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.tokenizer.special_tokens_map.json", "size": 0 },
-        { "path": "tokenizer/tokenizer_config.json", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.tokenizer.tokenizer_config.json", "size": 0 },
-        { "path": "scheduler/scheduler_config.json", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.scheduler.scheduler_config.json", "size": 0 }
+        {
+          "path": "unet/model.onnx",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.unet.model.onnx",
+          "size": 1720260916
+        },
+        {
+          "path": "text_encoder/model.onnx",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.text_encoder.model.onnx",
+          "size": 246362840
+        },
+        {
+          "path": "vae_encoder/model.onnx",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.vae_encoder.model.onnx",
+          "size": 68425976
+        },
+        {
+          "path": "vae_decoder/model.onnx",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.vae_decoder.model.onnx",
+          "size": 99089816
+        },
+        {
+          "path": "tokenizer/vocab.json",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.tokenizer.vocab.json",
+          "size": 1059962
+        },
+        {
+          "path": "tokenizer/merges.txt",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.tokenizer.merges.txt",
+          "size": 524619
+        },
+        {
+          "path": "tokenizer/special_tokens_map.json",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.tokenizer.special_tokens_map.json",
+          "size": 585
+        },
+        {
+          "path": "tokenizer/tokenizer_config.json",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.tokenizer.tokenizer_config.json",
+          "size": 735
+        },
+        {
+          "path": "scheduler/scheduler_config.json",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/counterfeit-v3.scheduler.scheduler_config.json",
+          "size": 374
+        }
       ]
     },
     {
@@ -21,15 +57,51 @@
       "name": "Stable Diffusion 1.5",
       "website": "https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5",
       "files": [
-        { "path": "unet/model.onnx", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.unet.model.onnx", "size": 0 },
-        { "path": "text_encoder/model.onnx", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.text_encoder.model.onnx", "size": 0 },
-        { "path": "vae_encoder/model.onnx", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.vae_encoder.model.onnx", "size": 0 },
-        { "path": "vae_decoder/model.onnx", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.vae_decoder.model.onnx", "size": 0 },
-        { "path": "tokenizer/vocab.json", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.tokenizer.vocab.json", "size": 0 },
-        { "path": "tokenizer/merges.txt", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.tokenizer.merges.txt", "size": 0 },
-        { "path": "tokenizer/special_tokens_map.json", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.tokenizer.special_tokens_map.json", "size": 0 },
-        { "path": "tokenizer/tokenizer_config.json", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.tokenizer.tokenizer_config.json", "size": 0 },
-        { "path": "scheduler/scheduler_config.json", "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.scheduler.scheduler_config.json", "size": 0 }
+        {
+          "path": "unet/model.onnx",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.unet.model.onnx",
+          "size": 0
+        },
+        {
+          "path": "text_encoder/model.onnx",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.text_encoder.model.onnx",
+          "size": 0
+        },
+        {
+          "path": "vae_encoder/model.onnx",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.vae_encoder.model.onnx",
+          "size": 0
+        },
+        {
+          "path": "vae_decoder/model.onnx",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.vae_decoder.model.onnx",
+          "size": 0
+        },
+        {
+          "path": "tokenizer/vocab.json",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.tokenizer.vocab.json",
+          "size": 0
+        },
+        {
+          "path": "tokenizer/merges.txt",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.tokenizer.merges.txt",
+          "size": 0
+        },
+        {
+          "path": "tokenizer/special_tokens_map.json",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.tokenizer.special_tokens_map.json",
+          "size": 0
+        },
+        {
+          "path": "tokenizer/tokenizer_config.json",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.tokenizer.tokenizer_config.json",
+          "size": 0
+        },
+        {
+          "path": "scheduler/scheduler_config.json",
+          "url": "https://github.com/day7779/unpaint/releases/download/models-v1/sd15.scheduler.scheduler_config.json",
+          "size": 0
+        }
       ]
     }
   ]
