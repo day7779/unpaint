@@ -153,13 +153,19 @@ def convert_fp16(onnx_dir):
 
 
 def verify(onnx_dir):
-    import onnxruntime
+    import onnx
 
+    # The models are optimized for DirectML and contain com.microsoft contrib ops
+    # (e.g. NhwcConv) that the CPU runtime cannot execute, so a structural check is
+    # used to catch corruption or truncation without needing a matching kernel set.
     for component in ONNX_COMPONENTS:
         model_path = os.path.join(onnx_dir, component, "model.onnx")
-        log(f"verifying {component} loads")
-        session = onnxruntime.InferenceSession(model_path, providers=["CPUExecutionProvider"])
-        del session
+        log(f"verifying {component}")
+        model = onnx.load(model_path)
+        onnx.checker.check_model(model, full_check=False)
+        if not model.graph.node:
+            raise RuntimeError(f"{component} has no graph nodes")
+        del model
 
 
 def emit_assets(preset, onnx_dir, output_dir):
