@@ -64,8 +64,8 @@ namespace winrt::Unpaint
     auto updateStage = [&](string_view value, float progress = NAN)
     {
       stage = value;
-      AppLog::Info("Inference", format("{}: {}", rawTask.ModelId, stage));
-      async.update_state(progress, format("{}...", stage));
+      AppLog::Info("Inference", std::format("{}: {}", rawTask.ModelId, stage));
+      async.update_state(progress, std::format("{}...", stage));
     };
 
     try
@@ -154,21 +154,21 @@ namespace winrt::Unpaint
         RunSafetyCheck(outputs, async);
       }
 
-      AppLog::Info("Inference", format("{}: Generation completed.", task.ModelId));
+      AppLog::Info("Inference", std::format("{}: Generation completed.", task.ModelId));
       async.update_state(async_operation_state::succeeded, 1.f, "Done.");
       return outputs;
     }
     catch (...)
     {
       auto message = AppLog::DescribeException();
-      AppLog::Error("Inference", format("{} failed at {}: {}", rawTask.ModelId, stage, message));
+      AppLog::Error("Inference", std::format("{} failed at {}: {}", rawTask.ModelId, stage, message));
 
       _modelId.clear();
       _sessionParameters.reset();
       _textEmbedder.reset();
       _denoiser.reset();
 
-      auto status = format("Generation failed at {}: {}", stage, message);
+      auto status = std::format("Generation failed at {}: {}", stage, message);
       if (status.size() > 480) status.resize(480);
       async.update_state(async_operation_state::failed, 1.f, status);
       return {};
@@ -189,7 +189,7 @@ namespace winrt::Unpaint
 
     _modelId = modelId;
     _sessionParameters = make_unique<StableDiffusionStorageFileMapSessionParameters>(_onnxhost, files);
-    AppLog::Info("Inference", format("Resolved {} files for model {}.", files.size(), modelId));
+    AppLog::Info("Inference", std::format("Resolved {} files for model {}.", files.size(), modelId));
 
     _stepCount = 0;
     _positivePrompt.clear();
@@ -202,7 +202,7 @@ namespace winrt::Unpaint
 
   void StableDiffusionModelExecutor::ValidateModelFiles(std::string_view modelId, const std::unordered_map<std::string, winrt::Windows::Storage::StorageFile>& files)
   {
-    if (files.empty()) throw runtime_error(format("The files of model {} were not found. Please open the model library and reinstall it.", modelId));
+    if (files.empty()) throw runtime_error(std::format("The files of model {} were not found. Please open the model library and reinstall it.", modelId));
 
     const char* requiredFiles[] = {
       "scheduler\\scheduler_config.json",
@@ -225,9 +225,9 @@ namespace winrt::Unpaint
       }
     }
 
-    if (!missingFiles.empty()) throw runtime_error(format("Model {} is incomplete, the following files are missing: {}. Please open the model library and reinstall it.", modelId, missingFiles));
+    if (!missingFiles.empty()) throw runtime_error(std::format("Model {} is incomplete, the following files are missing: {}. Please open the model library and reinstall it.", modelId, missingFiles));
 
-    if (!files.contains("vae_encoder\\model.onnx")) AppLog::Warning("Inference", format("Model {} has no VAE encoder, image to image generation will not work.", modelId));
+    if (!files.contains("vae_encoder\\model.onnx")) AppLog::Warning("Inference", std::format("Model {} has no VAE encoder, image to image generation will not work.", modelId));
   }
 
   std::pair<Axodox::Graphics::TextureData, Axodox::Graphics::TextureData> StableDiffusionModelExecutor::LoadImage(const StableDiffusionInferenceTask& task, Axodox::Graphics::Rect& sourceRect, Axodox::Graphics::Rect& targetRect, Axodox::Threading::async_operation_source& async)

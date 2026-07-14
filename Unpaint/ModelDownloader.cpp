@@ -21,7 +21,7 @@ namespace winrt::Unpaint
 {
   const char* const ModelDownloader::_manifestUri = "https://raw.githubusercontent.com/day7779/unpaint/main/models.json";
 
-  const char* const ModelDownloader::_fallbackManifest = R"({
+  const char* const ModelDownloader::_fallbackManifest = R"JSON({
     "models": [
       {
         "id": "curated/counterfeit-v3",
@@ -40,7 +40,7 @@ namespace winrt::Unpaint
         ]
       }
     ]
-  })";
+  })JSON";
 
   const std::set<std::string> ModelDownloader::_requiredFiles = {
     "scheduler/scheduler_config.json",
@@ -183,7 +183,7 @@ namespace winrt::Unpaint
     async_operation_source async;
     operation.set_source(async);
 
-    AppLog::Info("Model download", format("Installing model {}...", modelId));
+    AppLog::Info("Model download", std::format("Installing model {}...", modelId));
 
     //Collect the files to download
     vector<RemoteModelFile> files;
@@ -204,7 +204,7 @@ namespace winrt::Unpaint
       auto huggingFaceFiles = GetHuggingFaceFiles(modelId, error);
       if (!huggingFaceFiles)
       {
-        AppLog::Error("Model download", format("Installing model {} failed: {}", modelId, error));
+        AppLog::Error("Model download", std::format("Installing model {} failed: {}", modelId, error));
         async.update_state(async_operation_state::failed, error);
         return false;
       }
@@ -229,7 +229,7 @@ namespace winrt::Unpaint
 
     if (result)
     {
-      AppLog::Info("Model download", format("Model {} installed successfully.", modelId));
+      AppLog::Info("Model download", std::format("Model {} installed successfully.", modelId));
       async.update_state(async_operation_state::succeeded, 1.f, "Model downloaded successfully.");
     }
 
@@ -255,14 +255,14 @@ namespace winrt::Unpaint
     }
     catch (...)
     {
-      AppLog::Error("Model download", format("Querying {} failed: {}", to_string(uri), AppLog::DescribeException()));
+      AppLog::Error("Model download", std::format("Querying {} failed: {}", to_string(uri), AppLog::DescribeException()));
       return "";
     }
   }
 
   std::optional<std::vector<RemoteModelFile>> ModelDownloader::GetHuggingFaceFiles(std::string_view modelId, std::string& error)
   {
-    auto metadataText = TryQuery(to_wstring(format("https://huggingface.co/api/models/{}?blobs=true", modelId)));
+    auto metadataText = TryQuery(to_wstring(std::format("https://huggingface.co/api/models/{}?blobs=true", modelId)));
     auto metadata = try_parse_json<HuggingFaceModelData>(metadataText);
     if (!metadata)
     {
@@ -279,7 +279,7 @@ namespace winrt::Unpaint
     string missing;
     if (!IsModelFileSetComplete(availableFiles, &missing))
     {
-      error = format("The model does not match the Stable Diffusion ONNX layout, missing: {}.", missing);
+      error = std::format("The model does not match the Stable Diffusion ONNX layout, missing: {}.", missing);
       return nullopt;
     }
 
@@ -290,7 +290,7 @@ namespace winrt::Unpaint
 
       results.push_back(RemoteModelFile{
         *file.FilePath,
-        to_wstring(format("https://huggingface.co/{}/resolve/main/{}", modelId, *file.FilePath)),
+        to_wstring(std::format("https://huggingface.co/{}/resolve/main/{}", modelId, *file.FilePath)),
         *file.Size
       });
     }
@@ -334,7 +334,7 @@ namespace winrt::Unpaint
       {
         if (!async.is_cancelled())
         {
-          auto message = format("Failed to download {}: {}", file.Path, error);
+          auto message = std::format("Failed to download {}: {}", file.Path, error);
           AppLog::Error("Model download", message);
           async.update_state(async_operation_state::failed, message);
         }
@@ -376,7 +376,7 @@ namespace winrt::Unpaint
         request.Method(HttpMethod::Get());
         if (existingSize > 0)
         {
-          request.Headers().TryAppendWithoutValidation(L"Range", to_hstring(format("bytes={}-", existingSize)));
+          request.Headers().TryAppendWithoutValidation(L"Range", to_hstring(std::format("bytes={}-", existingSize)));
         }
 
         auto requestResult = _httpClient.TrySendRequestAsync(request, HttpCompletionOption::ResponseHeadersRead).get();
@@ -391,7 +391,7 @@ namespace winrt::Unpaint
 
         if (statusCode == HttpStatusCode::Unauthorized || statusCode == HttpStatusCode::Forbidden)
         {
-          error = format("HTTP {} - the host has blocked anonymous downloads of this file (storage quota or gated model). Please select another model source.", int32_t(statusCode));
+          error = std::format("HTTP {} - the host has blocked anonymous downloads of this file (storage quota or gated model). Please select another model source.", int32_t(statusCode));
           return false;
         }
 
@@ -400,7 +400,7 @@ namespace winrt::Unpaint
         else if (statusCode == HttpStatusCode::Ok) { append = false; existingSize = 0; }
         else
         {
-          error = format("HTTP {}", int32_t(statusCode));
+          error = std::format("HTTP {}", int32_t(statusCode));
           continue;
         }
 
@@ -434,7 +434,7 @@ namespace winrt::Unpaint
           position += bufferRead.Length();
 
           auto fileProgress = expectedSize > 0 ? float(double(position) / double(expectedSize)) : 0.f;
-          async.update_state((float(fileIndex) + fileProgress) / float(fileCount), format("Downloading {} ({}/{} MB)...", file.Path, position / 1024 / 1024, expectedSize / 1024 / 1024));
+          async.update_state((float(fileIndex) + fileProgress) / float(fileCount), std::format("Downloading {} ({}/{} MB)...", file.Path, position / 1024 / 1024, expectedSize / 1024 / 1024));
         }
 
         sourceStream.Close();
@@ -445,8 +445,8 @@ namespace winrt::Unpaint
         //Verify the downloaded size
         if (expectedSize > 0 && position != expectedSize)
         {
-          error = format("the download ended too early ({}/{} bytes)", position, expectedSize);
-          AppLog::Warning("Model download", format("Downloading {} was truncated on attempt {} ({}/{} bytes), retrying...", file.Path, attempt + 1, position, expectedSize));
+          error = std::format("the download ended too early ({}/{} bytes)", position, expectedSize);
+          AppLog::Warning("Model download", std::format("Downloading {} was truncated on attempt {} ({}/{} bytes), retrying...", file.Path, attempt + 1, position, expectedSize));
           continue;
         }
 
@@ -463,7 +463,7 @@ namespace winrt::Unpaint
       catch (...)
       {
         error = AppLog::DescribeException();
-        AppLog::Warning("Model download", format("Downloading {} failed on attempt {}: {}", file.Path, attempt + 1, error));
+        AppLog::Warning("Model download", std::format("Downloading {} failed on attempt {}: {}", file.Path, attempt + 1, error));
       }
     }
 

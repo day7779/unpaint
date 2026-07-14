@@ -27,16 +27,16 @@ namespace
   {
     if (!element) return;
 
-    if (auto control = element.try_as<Windows::UI::Xaml::Controls::Control>())
+    if (auto control = element.try_as<Control>())
     {
       control.UseSystemFocusVisuals(true);
 
       auto needsEngagement =
-        bool(element.try_as<Windows::UI::Xaml::Controls::TextBox>()) ||
-        bool(element.try_as<Windows::UI::Xaml::Controls::Slider>()) ||
-        bool(element.try_as<Windows::UI::Xaml::Controls::ComboBox>()) ||
-        bool(element.try_as<Windows::UI::Xaml::Controls::ListViewBase>()) ||
-        bool(element.try_as<Microsoft::UI::Xaml::Controls::NumberBox>());
+        bool(element.try_as<TextBox>()) ||
+        bool(element.try_as<Slider>()) ||
+        bool(element.try_as<ComboBox>()) ||
+        bool(element.try_as<ListViewBase>()) ||
+        bool(element.try_as<winrt::Microsoft::UI::Xaml::Controls::NumberBox>());
 
       if (needsEngagement) control.IsFocusEngagementEnabled(true);
     }

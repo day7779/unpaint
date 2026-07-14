@@ -60,7 +60,7 @@ namespace winrt::Unpaint::implementation
     {
       ContentDialog errorDialog{};
       errorDialog.Title(box_value(L"Importing model"));
-      errorDialog.Content(box_value(to_hstring(format("The selected folder is not a valid Stable Diffusion ONNX model, the following files are missing: {}.", missingFiles))));
+      errorDialog.Content(box_value(to_hstring(std::format("The selected folder is not a valid Stable Diffusion ONNX model, the following files are missing: {}.", missingFiles))));
       errorDialog.PrimaryButtonText(L"OK");
       errorDialog.DefaultButton(ContentDialogButton::Primary);
 
@@ -197,7 +197,7 @@ namespace winrt::Unpaint::implementation
 
     ContentDialog confirmationDialog{};
     confirmationDialog.Title(box_value(L"Uninstalling model"));
-    confirmationDialog.Content(box_value(to_wstring(format("Would you like to remove model {}?", modelId))));
+    confirmationDialog.Content(box_value(to_wstring(std::format("Would you like to remove model {}?", modelId))));
     confirmationDialog.PrimaryButtonText(L"Yes");
     confirmationDialog.SecondaryButtonText(L"No");
 

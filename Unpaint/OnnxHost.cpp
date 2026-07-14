@@ -60,7 +60,7 @@ namespace winrt::Unpaint
     _executor(create_executor(_deviceInformation->IsDeviceXbox(), *_state->AdapterIndex)),
     _adapterIndexChangedSubscription(_state->AdapterIndex.ValueChanged({ this, &OnnxHost::OnAdapterIndexChanged }))
   {
-    AppLog::Info("DirectML", format("Using {} DirectML provider on adapter {}.", _deviceInformation->IsDeviceXbox() ? "platform" : "custom", *_state->AdapterIndex));
+    AppLog::Info("DirectML", std::format("Using {} DirectML provider on adapter {}.", _deviceInformation->IsDeviceXbox() ? "platform" : "custom", *_state->AdapterIndex));
   }
 
   const std::shared_ptr<Axodox::MachineLearning::Sessions::OnnxEnvironment>& OnnxHost::Environment() const
@@ -85,7 +85,7 @@ namespace winrt::Unpaint
 
   void OnnxHost::OnAdapterIndexChanged(OptionPropertyBase*)
   {
-    AppLog::Info("DirectML", format("Changing adapter to {}.", *_state->AdapterIndex));
+    AppLog::Info("DirectML", std::format("Changing adapter to {}.", *_state->AdapterIndex));
     if (_deviceInformation->IsDeviceXbox()) static_pointer_cast<PlatformDmlExecutor>(_executor)->ChangeAdapter(*_state->AdapterIndex);
     else static_pointer_cast<DmlExecutor>(_executor)->ChangeAdapter(*_state->AdapterIndex);
   }
