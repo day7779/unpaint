@@ -2,6 +2,7 @@
 #include "ModelDownloader.h"
 #include "AppLog.h"
 
+#include <fstream>
 #include <winrt/Windows.Web.Http.h>
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/Windows.Web.Http.Filters.h>

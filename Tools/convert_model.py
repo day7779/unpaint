@@ -5,6 +5,7 @@ Downloads a checkpoint, exports it with optimum, converts the weights to fp16
 and emits flat release assets plus a manifest describing the file layout.
 """
 import argparse
+import gc
 import json
 import os
 import shutil
@@ -128,14 +129,34 @@ def convert_fp16(onnx_dir):
 
         log(f"optimizing and converting {component} to fp16")
         model_type = model_types[component]
-        fusion_options = FusionOptions(model_type)
-        model = optimize_model(
-            model_path,
-            model_type=model_type,
-            opt_level=0,
-            optimization_options=fusion_options,
-            use_gpu=True,
-        )
+
+        # attention fusion is broken for current unet exports and doubles peak memory when retried
+        attempts = [True] if component == "unet" else [False, True]
+
+        model = None
+        last_error = None
+        for disable_attention_fusion in attempts:
+            try:
+                fusion_options = FusionOptions(model_type)
+                if disable_attention_fusion:
+                    fusion_options.enable_attention = False
+                    log(f"optimizing {component} with attention fusion disabled")
+                model = optimize_model(
+                    model_path,
+                    model_type=model_type,
+                    opt_level=0,
+                    optimization_options=fusion_options,
+                    use_gpu=True,
+                )
+                break
+            except Exception as error:
+                last_error = error
+                log(f"fusion attempt failed for {component}: {error}")
+                gc.collect()
+
+        if model is None:
+            raise RuntimeError(f"optimization failed for {component}: {last_error}")
+
         model.convert_float_to_float16(keep_io_types=True, op_block_list=["RandomNormalLike"])
 
         # drop the fp32 files and save a single fp16 file
