@@ -181,6 +181,8 @@
     <ClInclude Include="IsNanToBooleanConverter.h" />
     <ClInclude Include="StableDiffusionModelExecutor.h" />
     <ClInclude Include="ModelRepository.h" />
+    <ClInclude Include="ModelDownloader.h" />
+    <ClInclude Include="AppLog.h" />
     <ClInclude Include="ModelsView.h">
       <DependentUpon>ModelsView.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -372,6 +374,7 @@
     <ClCompile Include="ShowcaseViewModel.cpp" />
     <ClCompile Include="StableDiffusionModelExecutor.cpp" />
     <ClCompile Include="ModelRepository.cpp" />
+    <ClCompile Include="ModelDownloader.cpp" />
     <ClCompile Include="ModelsView.cpp">
       <DependentUpon>ModelsView.xaml</DependentUpon>
       <SubType>Code</SubType>

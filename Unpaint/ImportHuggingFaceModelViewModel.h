@@ -1,5 +1,6 @@
 #pragma once
 #include "ImportHuggingFaceModelViewModel.g.h"
+#include "ModelDownloader.h"
 
 namespace winrt::Unpaint::implementation
 {
@@ -20,7 +21,7 @@ namespace winrt::Unpaint::implementation
     hstring _modelId, _status;
     bool _isValid = false;
 
-    Axodox::MachineLearning::Web::HuggingFaceClient _huggingFaceClient;
+    ModelDownloader _downloader;
   };
 }
 namespace winrt::Unpaint::factory_implementation

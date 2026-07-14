@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "ModelsViewModel.g.h"
 #include "ModelRepository.h"
+#include "ModelDownloader.h"
 
 namespace winrt::Unpaint::implementation
 {
@@ -10,6 +11,12 @@ namespace winrt::Unpaint::implementation
 
     fire_and_forget ImportModelFromHuggingFaceAsync();
     fire_and_forget ImportModelFromDiskAsync();
+
+    Windows::Foundation::Collections::IObservableVector<ModelViewModel> RecommendedModels();
+    int32_t SelectedRecommendedModel();
+    void SelectedRecommendedModel(int32_t value);
+    bool IsRecommendedModelSelected();
+    void InstallSelectedRecommendedModelAsync();
 
     Windows::Foundation::Collections::IObservableVector<ModelViewModel> InstalledModels();
     bool AreInstalledModelsEmpty();
@@ -42,7 +49,12 @@ namespace winrt::Unpaint::implementation
     Windows::Foundation::Collections::IObservableVector<ModelViewModel> _installedModels;
     int32_t _selectedInstalledModel = -1;
 
+    Windows::Foundation::Collections::IObservableVector<ModelViewModel> _recommendedModels;
+    int32_t _selectedRecommendedModel = -1;
+    apartment_context _uiContext;
+
     void UpdateInstalledModels();
+    fire_and_forget RefreshRecommendedModelsAsync();
 
     fire_and_forget DownloadHuggingFaceModelAsync(hstring const& modelId);
   };

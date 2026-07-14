@@ -8,7 +8,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d">
 
-  <Grid>
+  <Grid XYFocusKeyboardNavigation="Enabled">
     <local:TitleBarHost VerticalAlignment="Top"/>
   
     <StackPanel Margin="24" Spacing="12" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="600">
@@ -38,6 +38,23 @@
         </StackPanel>
       </local:SettingControl>
             
+      <!-- Recommended models -->
+      <local:SettingControl Icon="&#xe735;" Title="Recommended models" Subtitle="Curated models which are verified to work with this app.">
+        <StackPanel Orientation="Horizontal" Grid.Column="1" Spacing="6">
+          <ComboBox MinWidth="200" VerticalAlignment="Center"
+                    ItemsSource="{x:Bind ViewModel.RecommendedModels}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedRecommendedModel, Mode=TwoWay}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="local:ModelViewModel">
+                <TextBlock Text="{x:Bind Name}"/>
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <Button FontFamily="{StaticResource SymbolThemeFontFamily}" Content="&#xebd3;" ToolTipService.ToolTip="Install selected model" FontSize="24" Padding="12"
+                  Click="{x:Bind ViewModel.InstallSelectedRecommendedModelAsync}" IsEnabled="{x:Bind ViewModel.IsRecommendedModelSelected, Mode=OneWay}"/>
+        </StackPanel>
+      </local:SettingControl>
+
       <!-- Manage installed models -->
       <local:SettingControl Icon="&#xe74c;" Title="Manage installed models" Subtitle="Remove unused models to free up space." Orientation="Vertical">
         <StackPanel>

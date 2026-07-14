@@ -62,6 +62,7 @@ namespace winrt::Unpaint
     std::shared_ptr<ModelRepository> _modelRepository;
     std::shared_ptr<ControlNetRepository> _controlnetRepository;
     std::shared_ptr<OnnxHost> _onnxhost;
+    std::shared_ptr<DeviceInformation> _deviceInformation;
 
     std::unique_ptr<Axodox::MachineLearning::Imaging::StableDiffusion::TextEmbedder> _textEmbedder;
     std::unique_ptr<Axodox::MachineLearning::Imaging::StableDiffusion::ImageDiffusionInferer> _denoiser;
@@ -78,6 +79,7 @@ namespace winrt::Unpaint
     Axodox::MachineLearning::Tensor _inputImage, _inputLatent;
 
     void EnsureEnvironment(std::string_view modelId);
+    void ValidateModelFiles(std::string_view modelId, const std::unordered_map<std::string, winrt::Windows::Storage::StorageFile>& files);
 
     std::pair<Axodox::Graphics::TextureData, Axodox::Graphics::TextureData> LoadImage(const StableDiffusionInferenceTask& task, Axodox::Graphics::Rect& sourceRect, Axodox::Graphics::Rect& targetRect, Axodox::Threading::async_operation_source& async);
     Axodox::MachineLearning::Tensor LoadMask(const StableDiffusionInferenceTask& task, Axodox::Graphics::Rect& sourceRect, Axodox::Graphics::Rect& targetRect, Axodox::Threading::async_operation_source& async);

@@ -25,16 +25,15 @@ namespace winrt::Unpaint::implementation
       apartment_context context;
 
       co_await resume_background();
-      auto model = _huggingFaceClient.GetModel(modelId);
+      std::string status;
+      auto isValid = _downloader.ValidateModel(modelId, status);
       co_await context;
 
       //Update IsValid
-      _isValid = model && model->IsValidModel(HuggingFaceModelDetails::StableDiffusionOnnxFileset);
+      _isValid = isValid;
 
       //Update Status
-      if (!model) _status = L"Failed to fetch model data.";
-      else if (!_isValid) _status = L"The model does not match the Stable Diffusion ONNX schema.";
-      else _status = L"";
+      _status = to_hstring(status);
     }
     else
     {

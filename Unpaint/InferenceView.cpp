@@ -223,10 +223,47 @@ namespace winrt::Unpaint::implementation
     }
   }
 
-  void InferenceView::OnLastImageInvoked(Windows::UI::Xaml::Input::KeyboardAccelerator const& /*sender*/, Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& /*args*/)
+  void InferenceView::OnLastImageInvoked(Windows::UI::Xaml::Input::KeyboardAccelerator const&, Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args)
   {
     const auto& project = _viewModel.Project();
-    project.SelectedImageIndex(int32_t(project.Images().Size()) - 1);
+    if (project.Images().Size() > 0) project.SelectedImageIndex(int32_t(project.Images().Size()) - 1);
+    args.Handled(true);
+  }
+
+  void InferenceView::OnGenerateInvoked(Windows::UI::Xaml::Input::KeyboardAccelerator const&, Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args)
+  {
+    _viewModel.GenerateImage();
+    args.Handled(true);
+  }
+
+  void InferenceView::OnCreateModeInvoked(Windows::UI::Xaml::Input::KeyboardAccelerator const&, Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args)
+  {
+    _viewModel.SelectedModeIndex(0);
+    args.Handled(true);
+  }
+
+  void InferenceView::OnModifyModeInvoked(Windows::UI::Xaml::Input::KeyboardAccelerator const&, Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args)
+  {
+    if (_viewModel.IsModeSelectable()) _viewModel.SelectedModeIndex(1);
+    args.Handled(true);
+  }
+
+  void InferenceView::OnFocusPromptInvoked(Windows::UI::Xaml::Input::KeyboardAccelerator const&, Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args)
+  {
+    auto target = Windows::UI::Xaml::Input::FocusManager::FindFirstFocusableElement(PromptEditor());
+    if (auto control = target.try_as<Windows::UI::Xaml::Controls::Control>()) control.Focus(FocusState::Programmatic);
+    args.Handled(true);
+  }
+
+  void InferenceView::OnToggleInputPaneInvoked(Windows::UI::Xaml::Input::KeyboardAccelerator const&, Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args)
+  {
+    if (_viewModel.IsModeSelectable())
+    {
+      if (_viewModel.SelectedModeIndex() != 1) _viewModel.SelectedModeIndex(1);
+      ToggleInputPane();
+    }
+
+    args.Handled(true);
   }
 
   event_token InferenceView::PropertyChanged(Windows::UI::Xaml::Data::PropertyChangedEventHandler const& value)

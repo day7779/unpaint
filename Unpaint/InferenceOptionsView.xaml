@@ -7,6 +7,7 @@
   xmlns:graphics="using:Windows.Graphics"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  XYFocusKeyboardNavigation="Enabled"
   mc:Ignorable="d">
   <UserControl.Resources>
     <local:SizeToStringConverter x:Key="SizeToStringConverter"/>
@@ -48,7 +49,7 @@
         <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
 
-      <ComboBox ItemsSource="{x:Bind ViewModel.Models, Mode=OneWay}"
+      <ComboBox IsFocusEngagementEnabled="True" ItemsSource="{x:Bind ViewModel.Models, Mode=OneWay}"
                 SelectedIndex="{x:Bind ViewModel.SelectedModelIndex, Mode=TwoWay}">
         <ComboBox.ItemTemplate>
           <DataTemplate x:DataType="local:ModelViewModel">
@@ -62,13 +63,13 @@
 
     <!-- Resolution -->
     <TextBlock Grid.Row="2" Text="Scheduler" Style="{StaticResource SettingTextBlockStyle}" ToolTipService.ToolTip="Controls how the image is sampled, which affect image quality and aesthetics."/>
-    <ComboBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch"
+    <ComboBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" IsFocusEngagementEnabled="True"
           ItemsSource="{x:Bind ViewModel.Schedulers, Mode=OneWay}"
           SelectedIndex="{x:Bind ViewModel.SelectedSchedulerIndex, Mode=TwoWay}"/>
 
     <!-- Resolution -->
     <TextBlock Grid.Row="3" Text="Resolution" Style="{StaticResource SettingTextBlockStyle}" ToolTipService.ToolTip="Controls the size of the output image. Using higher resolutions will increase memory usage and reduce image generation speed."/>
-    <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch"
+    <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" IsFocusEngagementEnabled="True"
               ItemsSource="{x:Bind ViewModel.Resolutions, Mode=OneWay}"
               SelectedIndex="{x:Bind ViewModel.SelectedResolutionIndex, Mode=TwoWay}">
       <ComboBox.ItemTemplate>
@@ -85,18 +86,18 @@
         <TextBlock Text="Generate multiple images in one run: this can increase per image efficiency significantly, however generation will take longer and have increased video memory usage. The efficiency improvement diminishes at higher values." TextWrapping="WrapWholeWords" FlowDirection="LeftToRight"/>
       </ToolTipService.ToolTip>
     </CheckBox>
-    <muxc:NumberBox Grid.Row="4" Grid.Column="1" Minimum="1" Maximum="128" SmallChange="1" SpinButtonPlacementMode="Inline"
+    <muxc:NumberBox IsFocusEngagementEnabled="True" Grid.Row="4" Grid.Column="1" Minimum="1" Maximum="128" SmallChange="1" SpinButtonPlacementMode="Inline"
                     IsEnabled="{x:Bind ViewModel.IsBatchGenerationEnabled, Mode=OneWay}"
                     Value="{x:Bind ViewModel.BatchSize, Mode=TwoWay}"/>
 
     <!-- Guidance scale -->
     <TextBlock Grid.Row="5" Text="Guidance strength" Style="{StaticResource SettingTextBlockStyle}" ToolTipService.ToolTip="Controls the strength of human input when forming the output. Low values can result in more creative results, while higher values will conform to the input more strictly. Selecting values too high or low degrade the quality of the output."/>
-    <Slider Grid.Row="5" Grid.Column="1" Minimum="0" Maximum="20" SmallChange="0.1" LargeChange="1" StepFrequency="0.1"
+    <Slider IsFocusEngagementEnabled="True" Grid.Row="5" Grid.Column="1" Minimum="0" Maximum="20" SmallChange="0.1" LargeChange="1" StepFrequency="0.1"
             Value="{x:Bind ViewModel.GuidanceStrength, Mode=TwoWay}"/>
 
     <!-- Sampling steps -->
     <TextBlock Grid.Row="6" Text="Sampling steps" Style="{StaticResource SettingTextBlockStyle}" ToolTipService.ToolTip="Reducing this value speeds up image generation time, however it also degrades image quality."/>
-    <muxc:NumberBox Grid.Row="6" Grid.Column="1" Minimum="5" Maximum="100" SmallChange="1" SpinButtonPlacementMode="Inline"
+    <muxc:NumberBox IsFocusEngagementEnabled="True" Grid.Row="6" Grid.Column="1" Minimum="5" Maximum="100" SmallChange="1" SpinButtonPlacementMode="Inline"
                     Value="{x:Bind ViewModel.SamplingSteps, Mode=TwoWay}"/>
 
     <!-- Random seed -->
@@ -107,7 +108,7 @@
         <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
 
-      <muxc:NumberBox Value="{x:Bind ViewModel.RandomSeed, Mode=TwoWay}"/>
+      <muxc:NumberBox IsFocusEngagementEnabled="True" Value="{x:Bind ViewModel.RandomSeed, Mode=TwoWay}"/>
       <ToggleButton Grid.Column="1" FontFamily="{StaticResource SymbolThemeFontFamily}" Content="&#xe72e;" ToolTipService.ToolTip="Freeze seed" VerticalAlignment="Stretch"
                     IsChecked="{x:Bind ViewModel.IsSeedFrozen, Mode=TwoWay}"/>
     </Grid>

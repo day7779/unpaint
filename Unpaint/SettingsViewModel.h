@@ -30,6 +30,7 @@ namespace winrt::Unpaint::implementation
   private:
     INavigationService _navigationService;
     std::shared_ptr<UnpaintState> _unpaintState;
+    std::shared_ptr<DeviceInformation> _deviceInformation;
 
     Windows::Foundation::Collections::IObservableVector<AdapterViewModel> _adapters;
   };

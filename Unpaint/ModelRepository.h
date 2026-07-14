@@ -52,6 +52,8 @@ namespace winrt::Unpaint
     Windows::Foundation::IAsyncOperation<Windows::Storage::StorageFolder> GetModelFolderAsync(std::string_view modelId) const;
     std::unordered_map<std::string, Windows::Storage::StorageFile> GetModelFiles(std::string_view modelId) const;
 
+    static bool IsModelFolderComplete(const winrt::Windows::Storage::StorageFolder& folder, std::string* missingFiles = nullptr);
+
     Axodox::Infrastructure::event_publisher<ModelRepository*> ModelsChanged;
 
   private:

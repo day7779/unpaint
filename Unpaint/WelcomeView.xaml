@@ -21,7 +21,7 @@
     </Style>
   </Page.Resources>
 
-  <Grid>
+  <Grid XYFocusKeyboardNavigation="Enabled">
     <local:TitleBarHost VerticalAlignment="Top"/>
 
     <Grid RowSpacing="6" ColumnSpacing="36" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="780">

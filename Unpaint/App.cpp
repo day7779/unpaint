@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "App.h"
+#include "AppLog.h"
 #include "Infrastructure/WinRtDependencies.h"
 #include "Threading/Parallel.h"
 
@@ -20,6 +21,31 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Unpaint;
 using namespace winrt::Unpaint::implementation;
 
+namespace
+{
+  void configure_focus(const DependencyObject& element)
+  {
+    if (!element) return;
+
+    if (auto control = element.try_as<Windows::UI::Xaml::Controls::Control>())
+    {
+      control.UseSystemFocusVisuals(true);
+
+      auto needsEngagement =
+        bool(element.try_as<Windows::UI::Xaml::Controls::TextBox>()) ||
+        bool(element.try_as<Windows::UI::Xaml::Controls::Slider>()) ||
+        bool(element.try_as<Windows::UI::Xaml::Controls::ComboBox>()) ||
+        bool(element.try_as<Windows::UI::Xaml::Controls::ListViewBase>()) ||
+        bool(element.try_as<Microsoft::UI::Xaml::Controls::NumberBox>());
+
+      if (needsEngagement) control.IsFocusEngagementEnabled(true);
+    }
+
+    auto childCount = VisualTreeHelper::GetChildrenCount(element);
+    for (int32_t i = 0; i < childCount; i++) configure_focus(VisualTreeHelper::GetChild(element, i));
+  }
+}
+
 /// <summary>
 /// Creates the singleton application object.  This is the first line of authored code
 /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -35,20 +61,20 @@ App::App() :
 
   Suspending({ this, &App::OnSuspending });
 
-#if defined _DEBUG && !defined DISABLE_XAML_GENERATED_BREAK_ON_UNHANDLED_EXCEPTION
-  UnhandledException([this](IInspectable const&, UnhandledExceptionEventArgs const& e)
+  auto version = Package::Current().Id().Version();
+  AppLog::Info("Application", std::format("Starting Unpaint {}.{}.{}.{}. Log file: {}", version.Major, version.Minor, version.Build, version.Revision, AppLog::Path().string()));
+  UnhandledException([](IInspectable const&, UnhandledExceptionEventArgs const& eventArgs)
     {
-      if (IsDebuggerPresent())
-      {
-        auto errorMessage = e.Message();
-        __debugbreak();
-      }
-    });
+      AppLog::Error("Unhandled UI exception", to_string(eventArgs.Message()));
+#if defined _DEBUG && !defined DISABLE_XAML_GENERATED_BREAK_ON_UNHANDLED_EXCEPTION
+      if (IsDebuggerPresent()) __debugbreak();
 #endif
+    });
 }
 
 void App::Activate(Windows::ApplicationModel::Activation::IActivatedEventArgs eventArgs)
 {
+  AppLog::Info("Application", "Activating main window.");
   auto window = Window::Current();  
 
   ApplicationView::GetForCurrentView().SetDesiredBoundsMode(ApplicationViewBoundsMode::UseCoreWindow);
@@ -60,6 +86,9 @@ void App::Activate(Windows::ApplicationModel::Activation::IActivatedEventArgs ev
   if (_frame == nullptr)
   {
     _frame = Frame();
+    _frame.XYFocusKeyboardNavigation(Windows::UI::Xaml::Input::XYFocusKeyboardNavigationMode::Enabled);
+    _frame.TabFocusNavigation(Windows::UI::Xaml::Input::KeyboardNavigationMode::Cycle);
+    _frame.UseSystemFocusVisuals(true);
     _frame.SetValue(BackdropMaterial::ApplyToRootOrPageBackgroundProperty(), box_value(true));
     _frame.NavigationFailed({ this, &App::OnNavigationFailed });
     window.Content(_frame);
@@ -129,7 +158,9 @@ void App::OnSuspending([[maybe_unused]] IInspectable const& sender, [[maybe_unus
 /// <param name="e">Details about the navigation failure</param>
 void App::OnNavigationFailed(IInspectable const&, NavigationFailedEventArgs const& e)
 {
-  throw hresult_error(E_FAIL, hstring(L"Failed to load Page ") + e.SourcePageType().Name);
+  auto message = hstring(L"Failed to load Page ") + e.SourcePageType().Name;
+  AppLog::Error("Navigation", to_string(message));
+  throw hresult_error(E_FAIL, message);
 }
 
 void winrt::Unpaint::implementation::App::OpenUri(Windows::Foundation::Uri const& uri)
@@ -172,6 +203,8 @@ void App::NavigateToView(Windows::UI::Xaml::Interop::TypeName viewType)
   {
     _frame.Navigate(viewType);
   }
+
+  configure_focus(_frame.Content().try_as<DependencyObject>());
 }
 
 bool App::IsPointerOverTitleBar()

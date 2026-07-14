@@ -5,6 +5,7 @@
     xmlns:local="using:Unpaint"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    XYFocusKeyboardNavigation="Enabled"
     mc:Ignorable="d">
   <UserControl.Resources>
     <local:BooleanInverter x:Key="BooleanInverter"/>
@@ -18,10 +19,10 @@
       </Grid.ColumnDefinitions>
       
       <TextBlock Text="ControlNet" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center"/>
-      <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.IsEnabled, Mode=TwoWay}" FlowDirection="RightToLeft" VerticalAlignment="Center"/>
+      <ToggleSwitch IsFocusEngagementEnabled="True" Grid.Column="1" IsOn="{x:Bind ViewModel.IsEnabled, Mode=TwoWay}" FlowDirection="RightToLeft" VerticalAlignment="Center"/>
     </Grid>
     <Grid>
-      <GridView ItemsSource="{x:Bind ViewModel.Modes}" SelectionMode="Single" Margin="0,0,0,-12"
+      <GridView IsFocusEngagementEnabled="True" ItemsSource="{x:Bind ViewModel.Modes}" SelectionMode="Single" Margin="0,0,0,-12"
                 SelectedIndex="{x:Bind ViewModel.SelectedModeIndex, Mode=TwoWay}" HorizontalAlignment="Center"
                 IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
         <GridView.ItemsPanel>
@@ -56,7 +57,7 @@
       </Grid.ColumnDefinitions>
 
       <TextBlock Text="Auto-convert input image" VerticalAlignment="Center"/>
-      <ToggleSwitch Grid.Column="1" FlowDirection="RightToLeft" VerticalAlignment="Center" 
+      <ToggleSwitch IsFocusEngagementEnabled="True" Grid.Column="1" FlowDirection="RightToLeft" VerticalAlignment="Center"
                     IsEnabled="{x:Bind ViewModel.IsAnnotatorAvailable, Mode=OneWay}"
                     IsOn="{x:Bind ViewModel.IsAnnotatorEnabled, Mode=TwoWay}"/>
     </Grid>
@@ -68,7 +69,7 @@
       </Grid.ColumnDefinitions>
 
       <TextBlock Text="Conditioning scale" VerticalAlignment="Center"/>
-      <Slider Grid.Column="1" VerticalAlignment="Center" 
+      <Slider Grid.Column="1" VerticalAlignment="Center" IsFocusEngagementEnabled="True"
               Minimum="0" Maximum="1" SmallChange="0.1" LargeChange="1" StepFrequency="0.1"
               IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}"
               Value="{x:Bind ViewModel.ConditioningScale, Mode=TwoWay}"/>

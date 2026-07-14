@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ModelRepository.h"
+#include "ModelDownloader.h"
 
 using namespace Axodox::Infrastructure;
 using namespace Axodox::Json;
@@ -37,28 +38,29 @@ namespace winrt::Unpaint
 
   bool ModelRepository::TryInstallHuggingFaceModel(std::string_view modelId, Axodox::Threading::async_operation& operation)
   {
-    auto huggingFaceClient = dependencies.resolve<HuggingFaceClient>();
+    auto modelIdText = string(modelId);
+    if (modelIdText.empty() || modelIdText.starts_with('/') || modelIdText.find('\\') != string::npos || modelIdText.find("..") != string::npos || count(modelIdText.begin(), modelIdText.end(), '/') != 1)
+    {
+      async_operation_source async;
+      operation.set_source(async);
+      async.update_state(async_operation_state::failed, 1.f, "Model ID must use the owner/repository format.");
+      return false;
+    }
 
-    auto result = huggingFaceClient->TryDownloadModel(
-      modelId,
-      HuggingFaceModelDetails::StableDiffusionOnnxFileset,
-      HuggingFaceModelDetails::StableDiffusionOnnxOptionals,
-      _root / modelId,
-      operation);
+    ModelDownloader downloader{};
+
+    auto result = downloader.TryDownloadModel(modelId, _root / modelId, operation);
 
     if (result)
     {
+      auto curatedModel = downloader.GetCuratedModel(modelId);
+
       ModelMetadata metadata;
       *metadata.Id = modelId;
-      *metadata.Name = modelId;
-      *metadata.Website = "https://huggingface.co/" + string(modelId);
+      *metadata.Name = curatedModel ? *curatedModel->Name : string(modelId);
+      *metadata.Website = curatedModel ? *curatedModel->Website : "https://huggingface.co/" + string(modelId);
 
       try_write_text(_root / modelId / "unpaint.json", stringify_json(metadata));
-    }
-    else
-    {
-      error_code ec;
-      filesystem::remove_all(_root / modelId, ec);
     }
 
     Refresh();
@@ -89,6 +91,22 @@ namespace winrt::Unpaint
     filesystem::remove_all(_root / modelId, ec);
 
     Refresh();
+  }
+
+  bool ModelRepository::IsModelFolderComplete(const winrt::Windows::Storage::StorageFolder& folder, std::string* missingFiles)
+  {
+    vector<StorageFile> files;
+    read_files_recursively(folder, files).get();
+
+    set<string> relativePaths;
+    for (auto& file : files)
+    {
+      auto relativePath = to_lower(to_string(file.Path()).substr(folder.Path().size() + 1));
+      replace(relativePath.begin(), relativePath.end(), '\\', '/');
+      relativePaths.emplace(relativePath);
+    }
+
+    return ModelDownloader::IsModelFileSetComplete(relativePaths, missingFiles);
   }
 
   std::filesystem::path ModelRepository::Root() const

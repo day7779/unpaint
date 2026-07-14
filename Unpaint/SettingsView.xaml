@@ -12,7 +12,7 @@
     </Style>
   </Page.Resources>
 
-  <Grid>
+  <Grid XYFocusKeyboardNavigation="Enabled">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>

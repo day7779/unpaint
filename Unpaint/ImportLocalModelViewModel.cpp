@@ -2,6 +2,7 @@
 #include "ImportLocalModelViewModel.h"
 #include "ImportLocalModelViewModel.g.cpp"
 #include "Storage/UwpStorage.h"
+#include "ModelDownloader.h"
 
 using namespace Axodox::Storage;
 using namespace Axodox::MachineLearning::Web;
@@ -52,16 +53,15 @@ namespace winrt::Unpaint::implementation
       vector<StorageFile> files;
       co_await read_files_recursively(_modelFolder, files);
 
-      auto count = 0;
-      const auto& fileset = HuggingFaceModelDetails::StableDiffusionOnnxFileset;
+      set<string> fileNames;
       for (const auto& file : files)
       {
         auto fileName = to_string(file.Path()).substr(_modelFolder.Path().size() + 1);
         replace(fileName.begin(), fileName.end(), '\\', '/');
-        if (fileset.contains(fileName)) count++;
+        fileNames.emplace(move(fileName));
       }
 
-      _isValid = count == fileset.size();
+      _isValid = ModelDownloader::IsModelFileSetComplete(fileNames);
       _status = _isValid ? L"" : L"The model does not match the Stable Diffusion ONNX schema.";
     }
     else

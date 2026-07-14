@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "StableDiffusionModelExecutor.h"
+#include "AppLog.h"
 
 using namespace Axodox::Collections;
 using namespace Axodox::Graphics;
@@ -24,6 +25,7 @@ namespace winrt::Unpaint
     _modelRepository(dependencies.resolve<ModelRepository>()),
     _controlnetRepository(dependencies.resolve<ControlNetRepository>()),
     _onnxhost(dependencies.resolve<OnnxHost>()),
+    _deviceInformation(dependencies.resolve<DeviceInformation>()),
     _stepCount(0),
     _isSafeModeEnabled(true)
   { }
@@ -44,6 +46,7 @@ namespace winrt::Unpaint
     }
     catch (...)
     {
+      AppLog::Error("Prompt validation", AppLog::DescribeException());
       return -1;
     }
   }
@@ -57,37 +60,48 @@ namespace winrt::Unpaint
     async_operation_source async;
     operation.set_source(async);
 
-    auto targetResolution = Size::Zero;
-    if (rawTask.InputImage) targetResolution = rawTask.InputImage.Size();
-    else if (rawTask.InputCondition) targetResolution = rawTask.InputCondition.Size();
-    else if (rawTask.InputMask) targetResolution = rawTask.InputMask.Size();
-    else targetResolution = { int(rawTask.Resolution.x), int(rawTask.Resolution.y) };
-
-    auto task = rawTask;
-    if (task.InputImage) task.InputImage = task.InputImage.Resize(targetResolution.Width, targetResolution.Height);
-    if (task.InputMask) task.InputMask = task.InputMask.Resize(targetResolution.Width, targetResolution.Height);
-    if (task.InputCondition) task.InputCondition = task.InputCondition.Resize(targetResolution.Width, targetResolution.Height);
+    string stage = "Preparing request";
+    auto updateStage = [&](string_view value, float progress = NAN)
+    {
+      stage = value;
+      AppLog::Info("Inference", format("{}: {}", rawTask.ModelId, stage));
+      async.update_state(progress, format("{}...", stage));
+    };
 
     try
     {
-      //Initialize execution environment
-      async.update_state(NAN, "Initializing execution environment...");
+      updateStage("Preparing input images");
+      auto targetResolution = Size::Zero;
+      if (rawTask.InputImage) targetResolution = rawTask.InputImage.Size();
+      else if (rawTask.InputCondition) targetResolution = rawTask.InputCondition.Size();
+      else if (rawTask.InputMask) targetResolution = rawTask.InputMask.Size();
+      else targetResolution = { int(rawTask.Resolution.x), int(rawTask.Resolution.y) };
+
+      auto task = rawTask;
+      if (task.InputImage) task.InputImage = task.InputImage.Resize(targetResolution.Width, targetResolution.Height);
+      if (task.InputMask) task.InputMask = task.InputMask.Resize(targetResolution.Width, targetResolution.Height);
+      if (task.InputCondition) task.InputCondition = task.InputCondition.Resize(targetResolution.Width, targetResolution.Height);
+
+      updateStage("Initializing DirectML and model files");
       EnsureEnvironment(task.ModelId);
 
-      //Prepare inputs
+      updateStage("Encoding prompts");
       StableDiffusionInputs inputs;
       inputs.TextEmbeddings = CreateTextEmbeddings(task, async);
+      if (_deviceInformation->IsDeviceXbox()) _textEmbedder.reset();
 
       TextureData targetTexture;
       auto sourceRect = Rect::Empty;
       auto targetRect = Rect::Empty;
       if (task.InputImage || task.InputCondition)
       {
+        updateStage("Preparing image and mask");
         inputs.InputMask = LoadMask(task, sourceRect, targetRect, async);
 
         auto [imageTexture, conditionTexture] = LoadImage(task, sourceRect, targetRect, async);
         if (task.InputImage && (task.DenoisingStrength < 1.f || task.InputMask))
         {
+          updateStage("Encoding image with VAE");
           targetTexture = TextureData{ task.InputImage };
           inputs.InputImage = EncodeVAE(Tensor::FromTextureData(imageTexture, ColorNormalization::LinearPlusMinusOne), async);
         }
@@ -103,12 +117,14 @@ namespace winrt::Unpaint
         }
       }
 
-      //Run diffusion
+      updateStage("Loading and running denoiser");
       auto latentImage = RunStableDiffusion(task, inputs, async);
       if (async.is_cancelled()) return {};
 
-      //Prepare outputs
+      updateStage("Decoding image with VAE");
       auto decodedImage = DecodeVAE(latentImage, async);
+
+      updateStage("Compositing output");
       auto outputs = decodedImage.ToTextureData(ColorNormalization::LinearPlusMinusOne);
       if (task.InputMask && (sourceRect || targetRect))
       {
@@ -132,16 +148,29 @@ namespace winrt::Unpaint
         }
       }
 
-      //Safety check
-      if (task.IsSafetyCheckerEnabled) RunSafetyCheck(outputs, async);
+      if (task.IsSafetyCheckerEnabled)
+      {
+        updateStage("Checking output safety");
+        RunSafetyCheck(outputs, async);
+      }
 
-      //Return results
-      async.update_state(1.f, "Done.");
+      AppLog::Info("Inference", format("{}: Generation completed.", task.ModelId));
+      async.update_state(async_operation_state::succeeded, 1.f, "Done.");
       return outputs;
     }
     catch (...)
     {
-      async.update_state(1.f, "Generation failed.");
+      auto message = AppLog::DescribeException();
+      AppLog::Error("Inference", format("{} failed at {}: {}", rawTask.ModelId, stage, message));
+
+      _modelId.clear();
+      _sessionParameters.reset();
+      _textEmbedder.reset();
+      _denoiser.reset();
+
+      auto status = format("Generation failed at {}: {}", stage, message);
+      if (status.size() > 480) status.resize(480);
+      async.update_state(async_operation_state::failed, 1.f, status);
       return {};
     }
   }
@@ -153,8 +182,14 @@ namespace winrt::Unpaint
     _textEmbedder.reset();
     _denoiser.reset();
 
+    if (modelId.empty()) throw runtime_error("No model is selected. Please open the model library and install a model.");
+
+    auto files = _modelRepository->GetModelFiles(modelId);
+    ValidateModelFiles(modelId, files);
+
     _modelId = modelId;
-    _sessionParameters = make_unique<StableDiffusionStorageFileMapSessionParameters>(_onnxhost, _modelRepository->GetModelFiles(modelId));
+    _sessionParameters = make_unique<StableDiffusionStorageFileMapSessionParameters>(_onnxhost, files);
+    AppLog::Info("Inference", format("Resolved {} files for model {}.", files.size(), modelId));
 
     _stepCount = 0;
     _positivePrompt.clear();
@@ -163,6 +198,36 @@ namespace winrt::Unpaint
 
     _inputImage = {};
     _inputLatent = {};
+  }
+
+  void StableDiffusionModelExecutor::ValidateModelFiles(std::string_view modelId, const std::unordered_map<std::string, winrt::Windows::Storage::StorageFile>& files)
+  {
+    if (files.empty()) throw runtime_error(format("The files of model {} were not found. Please open the model library and reinstall it.", modelId));
+
+    const char* requiredFiles[] = {
+      "scheduler\\scheduler_config.json",
+      "text_encoder\\model.onnx",
+      "tokenizer\\merges.txt",
+      "tokenizer\\special_tokens_map.json",
+      "tokenizer\\tokenizer_config.json",
+      "tokenizer\\vocab.json",
+      "unet\\model.onnx",
+      "vae_decoder\\model.onnx"
+    };
+
+    string missingFiles;
+    for (auto requiredFile : requiredFiles)
+    {
+      if (!files.contains(requiredFile))
+      {
+        if (!missingFiles.empty()) missingFiles += ", ";
+        missingFiles += requiredFile;
+      }
+    }
+
+    if (!missingFiles.empty()) throw runtime_error(format("Model {} is incomplete, the following files are missing: {}. Please open the model library and reinstall it.", modelId, missingFiles));
+
+    if (!files.contains("vae_encoder\\model.onnx")) AppLog::Warning("Inference", format("Model {} has no VAE encoder, image to image generation will not work.", modelId));
   }
 
   std::pair<Axodox::Graphics::TextureData, Axodox::Graphics::TextureData> StableDiffusionModelExecutor::LoadImage(const StableDiffusionInferenceTask& task, Axodox::Graphics::Rect& sourceRect, Axodox::Graphics::Rect& targetRect, Axodox::Threading::async_operation_source& async)

@@ -82,7 +82,7 @@
     </Style>
   </Page.Resources>
   
-  <Grid Grid.RowSpacing="6">    
+  <Grid Grid.RowSpacing="6" XYFocusKeyboardNavigation="Enabled">    
     <VisualStateManager.VisualStateGroups>
       <VisualStateGroup>
         <VisualState x:Name="CommandPanelVisualState">
@@ -122,6 +122,11 @@
         <KeyboardAccelerator Key="PageUp" Invoked="OnPreviousImageInvoked"/>
         <KeyboardAccelerator Key="PageDown" Invoked="OnNextImageInvoked"/>
         <KeyboardAccelerator Key="End" Invoked="OnLastImageInvoked"/>
+        <KeyboardAccelerator Key="F5" Invoked="OnGenerateInvoked"/>
+        <KeyboardAccelerator Key="Number1" Modifiers="Control" Invoked="OnCreateModeInvoked"/>
+        <KeyboardAccelerator Key="Number2" Modifiers="Control" Invoked="OnModifyModeInvoked"/>
+        <KeyboardAccelerator Key="L" Modifiers="Control" Invoked="OnFocusPromptInvoked"/>
+        <KeyboardAccelerator Key="I" Modifiers="Control" Invoked="OnToggleInputPaneInvoked"/>
       </Border.KeyboardAccelerators>
     </Border>
 
@@ -303,7 +308,7 @@
           </StackPanel>          
           
           <!-- Denoising strength -->
-          <Slider Grid.Column="1" Minimum="0" Maximum="1" SmallChange="0.01" LargeChange="0.1" StepFrequency="0.01" VerticalAlignment="Center" Margin="6,-10"
+          <Slider Grid.Column="1" Minimum="0" Maximum="1" SmallChange="0.01" LargeChange="0.1" StepFrequency="0.01" VerticalAlignment="Center" Margin="6,-10" IsFocusEngagementEnabled="True"
                   Value="{x:Bind ViewModel.DenoisingStrength, Mode=TwoWay}"/>
 
           <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
@@ -380,7 +385,7 @@
         </Button>
 
         <!-- Prompt editor -->
-        <local:PromptEditorView Grid.Column="1"/>
+        <local:PromptEditorView x:Name="PromptEditor" Grid.Column="1"/>
 
         <!-- Execute -->
         <Button Grid.Column="2" VerticalAlignment="Stretch" Click="{x:Bind ViewModel.GenerateImage}">
@@ -395,6 +400,7 @@
           </Button.Content>
           <Button.KeyboardAccelerators>
             <KeyboardAccelerator Key="Enter"/>
+            <KeyboardAccelerator Key="Enter" Modifiers="Control"/>
           </Button.KeyboardAccelerators>
         </Button>
       </Grid>      

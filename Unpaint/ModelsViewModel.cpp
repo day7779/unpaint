@@ -21,10 +21,12 @@ namespace winrt::Unpaint::implementation
 
   ModelsViewModel::ModelsViewModel() :
     _installedModels(single_threaded_observable_vector<ModelViewModel>()),
+    _recommendedModels(single_threaded_observable_vector<ModelViewModel>()),
     _navigationService(dependencies.resolve<INavigationService>()),
     _modelRepository(dependencies.resolve<ModelRepository>())
   {
     UpdateInstalledModels();
+    RefreshRecommendedModelsAsync();
   }
 
   fire_and_forget ModelsViewModel::ImportModelFromHuggingFaceAsync()
@@ -44,9 +46,86 @@ namespace winrt::Unpaint::implementation
     if (result != ContentDialogResult::Primary) co_return;
 
     auto modelFolder = dialog.ViewModel().Result();
+
+    //Check the folder before accepting it
+    auto lifetime = get_strong();
+    co_await resume_background();
+
+    string missingFiles;
+    auto isComplete = ModelRepository::IsModelFolderComplete(modelFolder, &missingFiles);
+
+    co_await _uiContext;
+
+    if (!isComplete)
+    {
+      ContentDialog errorDialog{};
+      errorDialog.Title(box_value(L"Importing model"));
+      errorDialog.Content(box_value(to_hstring(format("The selected folder is not a valid Stable Diffusion ONNX model, the following files are missing: {}.", missingFiles))));
+      errorDialog.PrimaryButtonText(L"OK");
+      errorDialog.DefaultButton(ContentDialogButton::Primary);
+
+      co_await errorDialog.ShowAsync();
+      co_return;
+    }
+
     _modelRepository->AddModelFromDisk(modelFolder);
 
     UpdateInstalledModels();
+  }
+
+  Windows::Foundation::Collections::IObservableVector<ModelViewModel> ModelsViewModel::RecommendedModels()
+  {
+    return _recommendedModels;
+  }
+
+  int32_t ModelsViewModel::SelectedRecommendedModel()
+  {
+    return _selectedRecommendedModel;
+  }
+
+  void ModelsViewModel::SelectedRecommendedModel(int32_t value)
+  {
+    if (value == _selectedRecommendedModel) return;
+
+    _selectedRecommendedModel = value;
+    _propertyChanged(*this, PropertyChangedEventArgs(L"SelectedRecommendedModel"));
+    _propertyChanged(*this, PropertyChangedEventArgs(L"IsRecommendedModelSelected"));
+  }
+
+  bool ModelsViewModel::IsRecommendedModelSelected()
+  {
+    return _selectedRecommendedModel >= 0 && _selectedRecommendedModel < int32_t(_recommendedModels.Size());
+  }
+
+  void ModelsViewModel::InstallSelectedRecommendedModelAsync()
+  {
+    if (!IsRecommendedModelSelected()) return;
+
+    DownloadHuggingFaceModelAsync(_recommendedModels.GetAt(_selectedRecommendedModel).Id);
+  }
+
+  fire_and_forget ModelsViewModel::RefreshRecommendedModelsAsync()
+  {
+    auto lifetime = get_strong();
+    co_await resume_background();
+
+    ModelDownloader downloader{};
+    auto curatedModels = downloader.GetCuratedModels();
+
+    co_await _uiContext;
+
+    _recommendedModels.Clear();
+    for (auto& model : curatedModels)
+    {
+      _recommendedModels.Append(ModelViewModel{
+        .Id = to_hstring(*model.Id),
+        .Name = to_hstring(*model.Name),
+        .Uri = to_hstring(*model.Website),
+        .IsXL = false
+      });
+    }
+
+    _propertyChanged(*this, PropertyChangedEventArgs(L"IsRecommendedModelSelected"));
   }
 
   Windows::Foundation::Collections::IObservableVector<ModelViewModel> ModelsViewModel::InstalledModels()

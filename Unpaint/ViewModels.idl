@@ -50,6 +50,11 @@ namespace Unpaint
     void CopyLinkToClipboard();
     void RemoveModelAsync();
 
+    IObservableVector<ModelViewModel> RecommendedModels{ get; };
+    Int32 SelectedRecommendedModel;
+    Boolean IsRecommendedModelSelected{ get; };
+    void InstallSelectedRecommendedModelAsync();
+
     Boolean CanContinue{ get; };
     void Continue();
 
